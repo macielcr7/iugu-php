@@ -5,7 +5,7 @@ Package PHP 8.1+ para integração com a API da Iugu, seguindo Clean Architectur
 ## Instalação
 
 ```bash
-composer require macielcr7/iugu-php
+composer require eloca/iugu-php
 ```
 
 ## Configuração
