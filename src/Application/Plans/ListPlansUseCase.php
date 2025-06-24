@@ -7,33 +7,37 @@ namespace Iugu\Application\Plans;
 use Iugu\Infrastructure\Http\IuguHttpClient;
 use Iugu\Domain\Plans\Plan;
 
-class ListPlansUseCase
+final class ListPlansUseCase
 {
-    public function __construct(private IuguHttpClient $client) {}
+    private IuguHttpClient $client;
+
+    public function __construct(IuguHttpClient $client)
+    {
+        $this->client = $client;
+    }
 
     /**
      * @return Plan[]
-     * @throws \Exception
      */
     public function execute(): array
     {
-        $response = $this->client->get('plans');
-        $body = json_decode((string) $response->getBody(), true);
-        $items = $body['items'] ?? [];
-        $plans = [];
-        foreach ($items as $item) {
-            $plans[] = new Plan(
-                $item['id'] ?? null,
-                $item['identifier'] ?? '',
-                $item['name'] ?? '',
-                $item['interval'] ?? null,
-                $item['interval_type'] ?? null,
-                $item['value_cents'] ?? null,
-                $item['created_at'] ?? null,
-                $item['updated_at'] ?? null,
-                $item['features'] ?? null,
+        $response = $this->client->get('/v1/plans');
+        $body = json_decode($response->getBody()->getContents());
+
+        return array_map(function ($item) {
+            return new Plan(
+                id: $item->id ?? null,
+                identifier: $item->identifier ?? '',
+                name: $item->name ?? '',
+                interval: $item->interval ?? null,
+                interval_type: $item->interval_type ?? null,
+                created_at: $item->created_at ?? null,
+                updated_at: $item->updated_at ?? null,
+                features: $item->features ?? null,
+                prices: $item->prices ?? null,
+                payable_with: $item->payable_with ?? null,
+                max_cycles: $item->max_cycles ?? null,
             );
-        }
-        return $plans;
+        }, $body->items);
     }
 } 

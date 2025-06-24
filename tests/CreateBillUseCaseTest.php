@@ -7,6 +7,7 @@ use Iugu\Application\Bills\CreateBillUseCase;
 use Iugu\Infrastructure\Http\IuguHttpClient;
 use Iugu\Domain\Bills\Bill;
 use Psr\Http\Message\ResponseInterface;
+use Iugu\Application\Bills\Requests\CreateBillRequest;
 
 class CreateBillUseCaseTest extends TestCase
 {
@@ -24,11 +25,12 @@ class CreateBillUseCaseTest extends TestCase
         $mockClient->method('post')->willReturn($mockResponse);
 
         $useCase = new CreateBillUseCase($mockClient);
-        $bill = $useCase->execute([
-            'email' => 'boleto@exemplo.com',
-            'due_date' => '2024-12-01',
-            'items' => [['description' => 'Parcela', 'quantity' => 1, 'price_cents' => 1000]],
-        ]);
+        $request = new CreateBillRequest(
+            email: 'boleto@exemplo.com',
+            due_date: '2024-12-01',
+            items: [['description' => 'Parcela', 'quantity' => 1, 'price_cents' => 1000]]
+        );
+        $bill = $useCase->execute($request);
 
         $this->assertInstanceOf(Bill::class, $bill);
         $this->assertEquals('b1', $bill->id);

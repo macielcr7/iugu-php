@@ -15,19 +15,37 @@ class ListInvoiceSplitsUseCaseTest extends TestCase
         $mockClient = $this->createMock(IuguHttpClient::class);
         $mockResponse = $this->createMock(ResponseInterface::class);
         $mockResponse->method('getBody')->willReturn(json_encode([
-            'items' => [
-                [
-                    'id' => 'sp5',
-                    'recipient_account_id' => 'acc5',
-                    'cents' => 5000,
-                    'percent' => 25.0,
-                ],
-                [
-                    'id' => 'sp6',
-                    'recipient_account_id' => 'acc6',
-                    'cents' => 6000,
-                    'percent' => 75.0,
-                ]
+            [
+                'id' => 'sp5',
+                'name' => 'Split 5',
+                'recipient_account_id' => 'acc5',
+                'permit_aggregated' => true,
+                'percent' => 25.0,
+                'cents' => 5000,
+                'credit_card_percent' => null,
+                'credit_card_cents' => null,
+                'bank_slip_percent' => null,
+                'bank_slip_cents' => null,
+                'pix_percent' => null,
+                'pix_cents' => null,
+                'created_at' => '2023-01-01T00:00:00-03:00',
+                'updated_at' => '2023-01-01T00:00:00-03:00',
+            ],
+            [
+                'id' => 'sp6',
+                'name' => 'Split 6',
+                'recipient_account_id' => 'acc6',
+                'permit_aggregated' => false,
+                'percent' => 75.0,
+                'cents' => 6000,
+                'credit_card_percent' => null,
+                'credit_card_cents' => null,
+                'bank_slip_percent' => null,
+                'bank_slip_cents' => null,
+                'pix_percent' => null,
+                'pix_cents' => null,
+                'created_at' => '2023-01-01T00:00:00-03:00',
+                'updated_at' => '2023-01-01T00:00:00-03:00',
             ]
         ]));
         $mockClient->method('get')->willReturn($mockResponse);

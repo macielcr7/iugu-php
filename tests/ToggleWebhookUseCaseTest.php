@@ -14,12 +14,20 @@ class ToggleWebhookUseCaseTest extends TestCase
     {
         $mockClient = $this->createMock(IuguHttpClient::class);
         $mockResponse = $this->createMock(ResponseInterface::class);
-        $mockResponse->method('getBody')->willReturn(json_encode([
-            'id' => 'wh5',
-            'event' => 'invoice.paid',
-            'url' => 'https://meusite.com/webhook-paid',
-            'enabled' => false,
-        ]));
+        $mockResponse->method('getBody')->willReturn(new class {
+            public function __toString() {
+                return $this->getContents();
+            }
+            public function getContents() {
+                return json_encode([
+                    'id' => 'wh5',
+                    'event' => 'invoice.paid',
+                    'url' => 'https://meusite.com/webhook-paid',
+                    'mode' => 'production',
+                    'authorization' => null
+                ]);
+            }
+        });
         $mockClient->method('put')->willReturn($mockResponse);
 
         $useCase = new ToggleWebhookUseCase($mockClient);
@@ -29,6 +37,7 @@ class ToggleWebhookUseCaseTest extends TestCase
         $this->assertEquals('wh5', $webhook->id);
         $this->assertEquals('invoice.paid', $webhook->event);
         $this->assertEquals('https://meusite.com/webhook-paid', $webhook->url);
-        $this->assertFalse($webhook->enabled);
+        $this->assertEquals('production', $webhook->mode);
+        $this->assertNull($webhook->authorization);
     }
 } 

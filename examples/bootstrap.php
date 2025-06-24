@@ -2,6 +2,6 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use Iugu\Infrastructure\Http\IuguHttpClient;
+use Iugu\Iugu;
 
-$client = new IuguHttpClient(); 
+$iugu = new Iugu(); 

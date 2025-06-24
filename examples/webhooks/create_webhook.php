@@ -1,17 +1,14 @@
 <?php
 
-require __DIR__ . '/../bootstrap.php';
+use Iugu\Application\Webhooks\Requests\CreateWebhookRequest;
 
-use Iugu\Application\Webhooks\CreateWebhookUseCase;
+require_once __DIR__ . '/../bootstrap.php';
 
-$useCase = new CreateWebhookUseCase($client);
+$webhook = $iugu->webhooks()->create(
+    new CreateWebhookRequest(
+        event: 'invoice.created',
+        url: 'https://iugu-php-example.com/webhooks'
+    )
+);
 
-try {
-    $webhook = $useCase->execute([
-        'url' => 'https://meusite.com/webhook',
-        'event' => 'invoice.created',
-    ]);
-    print_r($webhook);
-} catch (Exception $e) {
-    echo 'Erro: ' . $e->getMessage();
-} 
+print_r($webhook);

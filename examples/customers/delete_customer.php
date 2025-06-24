@@ -2,13 +2,9 @@
 
 require __DIR__ . '/../bootstrap.php';
 
-use Iugu\Application\Customers\DeleteCustomerUseCase;
-
-$useCase = new DeleteCustomerUseCase($client);
-
 try {
-    $result = $useCase->execute('ID_DO_CLIENTE');
-    print_r($result);
+    $customer = $iugu->customers()->delete('ID_DO_CLIENTE');
+    print_r($customer);
 } catch (Exception $e) {
     echo 'Erro: ' . $e->getMessage();
 } 

@@ -4,21 +4,29 @@ declare(strict_types=1);
 
 namespace Iugu\Application\Webhooks;
 
+use Iugu\Domain\Webhooks\Webhook;
 use Iugu\Infrastructure\Http\IuguHttpClient;
 
-class DeleteWebhookUseCase
+final class DeleteWebhookUseCase
 {
-    public function __construct(private IuguHttpClient $client) {}
+    private IuguHttpClient $client;
 
-    /**
-     * @param string $id
-     * @return bool
-     * @throws \Exception
-     */
-    public function execute(string $id): bool
+    public function __construct(IuguHttpClient $client)
     {
-        $response = $this->client->delete('triggers/' . $id);
-        $body = json_decode((string) $response->getBody(), true);
-        return ($body['success'] ?? false) === true;
+        $this->client = $client;
+    }
+
+    public function execute(string $id): Webhook
+    {
+        $response = $this->client->delete("/v1/webhooks/$id");
+        $body = json_decode($response->getBody()->getContents());
+
+        return new Webhook(
+            id: $body->id,
+            event: $body->event,
+            url: $body->url,
+            mode: $body->mode,
+            authorization: $body->authorization ?? null,
+        );
     }
 } 

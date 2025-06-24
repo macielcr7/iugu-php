@@ -1,0 +1,36 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
+categories:
+  - title: '🚀 Features'
+    labels:
+      - 'feature'
+      - 'enhancement'
+  - title: '🐛 Correções de bugs'
+    labels:
+      - 'bug'
+      - 'fix'
+  - title: '🧰 Manutenção'
+    labels:
+      - 'chore'
+      - 'maintenance'
+  - title: '📝 Documentação'
+    labels:
+      - 'docs'
+  - title: '🔧 Refatoração'
+    labels:
+      - 'refactor'
+
+change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
+no-changes-template: 'Nenhuma mudança significativa.'
+
+version-resolver:
+  major:
+    labels: [ 'breaking change' ]
+  minor:
+    labels: [ 'feature', 'enhancement' ]
+  patch:
+    labels: [ 'fix', 'bug', 'chore', 'maintenance', 'docs', 'refactor' ]
+
+exclude-labels:
+  - 'skip-changelog' 

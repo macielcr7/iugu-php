@@ -23,14 +23,20 @@ class ListSplitsUseCase
         $splits = [];
         foreach ($items as $item) {
             $splits[] = new Split(
-                $item['id'] ?? null,
-                $item['recipient_account_id'] ?? '',
-                $item['cents'] ?? null,
-                $item['percent'] ?? null,
-                $item['type'] ?? null,
-                $item['created_at'] ?? null,
-                $item['updated_at'] ?? null,
-                $item['data'] ?? null,
+                id: $item['id'],
+                name: $item['name'] ?? null,
+                recipient_account_id: $item['recipient_account_id'],
+                permit_aggregated: $item['permit_aggregated'],
+                percent: $item['percent'],
+                cents: $item['cents'],
+                credit_card_percent: $item['credit_card_percent'],
+                credit_card_cents: $item['credit_card_cents'],
+                bank_slip_percent: $item['bank_slip_percent'],
+                bank_slip_cents: $item['bank_slip_cents'],
+                pix_percent: $item['pix_percent'],
+                pix_cents: $item['pix_cents'],
+                created_at: $item['created_at'] ?? null,
+                updated_at: $item['updated_at'] ?? null
             );
         }
         return $splits;

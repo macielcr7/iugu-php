@@ -18,15 +18,35 @@ class ListSplitsUseCaseTest extends TestCase
             'items' => [
                 [
                     'id' => 'sp1',
+                    'name' => 'Split 1',
                     'recipient_account_id' => 'acc1',
-                    'cents' => 1000,
+                    'permit_aggregated' => true,
                     'percent' => 50.0,
+                    'cents' => 1000,
+                    'credit_card_percent' => null,
+                    'credit_card_cents' => null,
+                    'bank_slip_percent' => null,
+                    'bank_slip_cents' => null,
+                    'pix_percent' => null,
+                    'pix_cents' => null,
+                    'created_at' => '2023-01-01T00:00:00-03:00',
+                    'updated_at' => '2023-01-01T00:00:00-03:00',
                 ],
                 [
                     'id' => 'sp2',
+                    'name' => 'Split 2',
                     'recipient_account_id' => 'acc2',
-                    'cents' => 2000,
+                    'permit_aggregated' => false,
                     'percent' => 50.0,
+                    'cents' => 2000,
+                    'credit_card_percent' => null,
+                    'credit_card_cents' => null,
+                    'bank_slip_percent' => null,
+                    'bank_slip_cents' => null,
+                    'pix_percent' => null,
+                    'pix_cents' => null,
+                    'created_at' => '2023-01-01T00:00:00-03:00',
+                    'updated_at' => '2023-01-01T00:00:00-03:00',
                 ]
             ]
         ]));

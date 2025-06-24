@@ -1,0 +1,14 @@
+name: Publish to Packagist
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  packagist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notificar Packagist
+        run: |
+          curl -XPOST -u "${{ secrets.PACKAGIST_USERNAME }}:${{ secrets.PACKAGIST_TOKEN }}" \
+            https://packagist.org/api/update-package?username=${{ secrets.PACKAGIST_USERNAME }} 

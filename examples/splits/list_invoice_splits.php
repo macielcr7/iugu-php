@@ -2,12 +2,9 @@
 
 require __DIR__ . '/../bootstrap.php';
 
-use Iugu\Application\Splits\ListInvoiceSplitsUseCase;
-
-$useCase = new ListInvoiceSplitsUseCase($client);
-
 try {
-    $splits = $useCase->execute('ID_DA_FATURA');
+    $invoiceId = 'ID_DA_FATURA';
+    $splits = $iugu->splits()->listFromInvoice($invoiceId);
     print_r($splits);
 } catch (Exception $e) {
     echo 'Erro: ' . $e->getMessage();

@@ -4,32 +4,31 @@ declare(strict_types=1);
 
 namespace Iugu\Application\Webhooks;
 
-use Iugu\Infrastructure\Http\IuguHttpClient;
+use Iugu\Application\Webhooks\Requests\UpdateWebhookRequest;
 use Iugu\Domain\Webhooks\Webhook;
+use Iugu\Infrastructure\Http\IuguHttpClient;
 
-class UpdateWebhookUseCase
+final class UpdateWebhookUseCase
 {
-    public function __construct(private IuguHttpClient $client) {}
+    private IuguHttpClient $iuguHttpClient;
 
-    /**
-     * @param string $id
-     * @param array $data
-     * @return Webhook
-     * @throws \Exception
-     */
-    public function execute(string $id, array $data): Webhook
+    public function __construct(IuguHttpClient $iuguHttpClient)
     {
-        $response = $this->client->put('triggers/' . $id, $data);
-        $body = json_decode((string) $response->getBody(), true);
+        $this->iuguHttpClient = $iuguHttpClient;
+    }
+
+    public function execute(string $id, UpdateWebhookRequest $request): Webhook
+    {
+        $response = $this->iuguHttpClient->put("/v1/webhooks/$id", $request->toArray());
+
+        $webhookData = json_decode($response->getBody()->getContents());
 
         return new Webhook(
-            $body['id'] ?? null,
-            $body['event'] ?? $data['event'] ?? '',
-            $body['url'] ?? $data['url'] ?? '',
-            $body['enabled'] ?? null,
-            $body['created_at'] ?? null,
-            $body['updated_at'] ?? null,
-            $body['data'] ?? null,
+            id: $webhookData->id,
+            event: $webhookData->event,
+            url: $webhookData->url,
+            mode: $webhookData->mode,
+            authorization: $webhookData->authorization ?? null,
         );
     }
 } 

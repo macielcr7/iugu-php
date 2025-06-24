@@ -62,41 +62,6 @@ Execute qualquer exemplo via terminal:
 php examples/invoices/create_invoice.php
 ```
 
-## Integração com Laravel
-
-Exemplo de Service Provider:
-```php
-// app/Providers/IuguServiceProvider.php
-namespace App\Providers;
-
-use Illuminate\Support\ServiceProvider;
-use Iugu\Infrastructure\Http\IuguHttpClient;
-use Iugu\Application\Invoices\CreateInvoiceUseCase;
-
-class IuguServiceProvider extends ServiceProvider
-{
-    public function register()
-    {
-        $this->app->singleton(IuguHttpClient::class, function ($app) {
-            return new IuguHttpClient();
-        });
-        $this->app->bind(CreateInvoiceUseCase::class, function ($app) {
-            return new CreateInvoiceUseCase($app->make(IuguHttpClient::class));
-        });
-        // ...outros casos de uso
-    }
-}
-```
-
-No Controller:
-```php
-public function store(Request $request, CreateInvoiceUseCase $useCase)
-{
-    $invoice = $useCase->execute($request->all());
-    // ...
-}
-```
-
 ## Observações
 - Helpers `env()` e `config()` disponíveis globalmente via autoload do Composer.
 - Consulte a documentação oficial da Iugu para detalhes de cada campo e resposta da API.

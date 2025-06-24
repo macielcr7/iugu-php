@@ -4,12 +4,19 @@ declare(strict_types=1);
 
 namespace Iugu\Application\Customers;
 
-use Iugu\Infrastructure\Http\IuguHttpClient;
+use Iugu\Domain\Common\Address;
+use Iugu\Domain\Common\CustomVariable;
 use Iugu\Domain\Customers\Customer;
+use Iugu\Infrastructure\Http\IuguHttpClient;
 
-class GetCustomerUseCase
+final class GetCustomerUseCase
 {
-    public function __construct(private IuguHttpClient $client) {}
+    private IuguHttpClient $client;
+
+    public function __construct(IuguHttpClient $client)
+    {
+        $this->client = $client;
+    }
 
     /**
      * @param string $id
@@ -18,18 +25,47 @@ class GetCustomerUseCase
      */
     public function execute(string $id): Customer
     {
-        $response = $this->client->get('customers/' . $id);
-        $body = json_decode((string) $response->getBody(), true);
+        $response = $this->client->get("/v1/customers/$id");
+        $body = json_decode($response->getBody()->getContents());
+
+        $customVariables = [];
+        if (!empty($body->custom_variables)) {
+            $customVariables = array_map(
+                static fn ($cv) => new CustomVariable(
+                    name: $cv->name,
+                    value: $cv->value
+                ),
+                $body->custom_variables
+            );
+        }
+
+        $address = null;
+        if (isset($body->address)) {
+            $address = new Address(
+                street: $body->address->street,
+                number: $body->address->number,
+                city: $body->address->city,
+                state: $body->address->state,
+                country: $body->address->country,
+                zip_code: $body->address->zip_code,
+                district: $body->address->district,
+                complement: $body->address->complement
+            );
+        }
 
         return new Customer(
-            $body['id'] ?? null,
-            $body['email'] ?? '',
-            $body['name'] ?? null,
-            $body['cpf_cnpj'] ?? null,
-            $body['notes'] ?? null,
-            $body['created_at'] ?? null,
-            $body['updated_at'] ?? null,
-            $body['custom_variables'] ?? null,
+            id: $body->id,
+            email: $body->email,
+            name: $body->name,
+            notes: $body->notes,
+            created_at: $body->created_at,
+            updated_at: $body->updated_at,
+            cpf_cnpj: $body->cpf_cnpj,
+            phone: $body->phone,
+            phone_prefix: $body->phone_prefix,
+            address: $address,
+            custom_variables: $customVariables,
+            cc_emails: $body->cc_emails
         );
     }
 } 

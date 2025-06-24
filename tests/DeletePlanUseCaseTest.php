@@ -2,25 +2,55 @@
 
 declare(strict_types=1);
 
+use Iugu\Domain\Plans\Plan;
+use Iugu\Iugu;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Iugu\Application\Plans\DeletePlanUseCase;
 use Iugu\Infrastructure\Http\IuguHttpClient;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 
 class DeletePlanUseCaseTest extends TestCase
 {
-    public function testExecuteReturnsTrueOnSuccess(): void
+    private Iugu $iugu;
+    private $mockClient;
+
+    protected function setUp(): void
     {
+        parent::setUp();
+        /** @var IuguHttpClient&MockObject $mockClient */
         $mockClient = $this->createMock(IuguHttpClient::class);
+        $this->mockClient = $mockClient;
+        $this->iugu = new Iugu($this->mockClient);
+    }
+
+    public function testExecuteReturnsDeletedPlan(): void
+    {
+        $responseBody = json_encode([
+            'id' => 'pl4',
+            'identifier' => 'excluido',
+            'name' => 'Excluído',
+            'interval' => 1,
+            'interval_type' => 'months',
+            'created_at' => '2023-01-04T00:00:00-03:00',
+            'updated_at' => '2023-01-04T00:00:00-03:00',
+            'payable_with' => ['credit_card'],
+            'max_cycles' => 12,
+        ]);
+
+        $mockStream = $this->createMock(StreamInterface::class);
+        $mockStream->method('getContents')->willReturn($responseBody);
         $mockResponse = $this->createMock(ResponseInterface::class);
-        $mockResponse->method('getBody')->willReturn(json_encode([
-            'success' => true
-        ]));
-        $mockClient->method('delete')->willReturn($mockResponse);
+        $mockResponse->method('getBody')->willReturn($mockStream);
+        $this->mockClient->method('delete')->willReturn($mockResponse);
 
-        $useCase = new DeletePlanUseCase($mockClient);
-        $result = $useCase->execute('pl4');
+        $plan = $this->iugu->plans()->delete('pl4');
 
-        $this->assertTrue($result);
+        $this->assertInstanceOf(Plan::class, $plan);
+        $this->assertEquals('pl4', $plan->id);
+        $this->assertEquals('excluido', $plan->identifier);
+        $this->assertEquals('Excluído', $plan->name);
+        $this->assertEquals(1, $plan->interval);
+        $this->assertEquals('months', $plan->interval_type);
     }
 } 

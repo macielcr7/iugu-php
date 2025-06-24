@@ -2,12 +2,9 @@
 
 require __DIR__ . '/../bootstrap.php';
 
-use Iugu\Application\PaymentMethods\ListPaymentMethodsUseCase;
-
-$useCase = new ListPaymentMethodsUseCase($client);
-
 try {
-    $paymentMethods = $useCase->execute('ID_DO_CLIENTE');
+    $customerId = 'ID_DO_CLIENTE';
+    $paymentMethods = $iugu->paymentMethods()->list($customerId);
     print_r($paymentMethods);
 } catch (Exception $e) {
     echo 'Erro: ' . $e->getMessage();

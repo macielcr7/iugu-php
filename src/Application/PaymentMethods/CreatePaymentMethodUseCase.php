@@ -4,33 +4,43 @@ declare(strict_types=1);
 
 namespace Iugu\Application\PaymentMethods;
 
-use Iugu\Infrastructure\Http\IuguHttpClient;
+use Iugu\Application\PaymentMethods\Requests\CreatePaymentMethodRequest;
 use Iugu\Domain\PaymentMethods\PaymentMethod;
+use Iugu\Infrastructure\Http\IuguHttpClient;
 
-class CreatePaymentMethodUseCase
+final class CreatePaymentMethodUseCase
 {
-    public function __construct(private IuguHttpClient $client) {}
+    private IuguHttpClient $client;
+
+    public function __construct(IuguHttpClient $client)
+    {
+        $this->client = $client;
+    }
 
     /**
-     * @param string $customerId
-     * @param array $data
+     * @param string $customer_id
+     * @param CreatePaymentMethodRequest $request
      * @return PaymentMethod
      * @throws \Exception
      */
-    public function execute(string $customerId, array $data): PaymentMethod
+    public function execute(string $customer_id, CreatePaymentMethodRequest $request): PaymentMethod
     {
-        $response = $this->client->post('customers/' . $customerId . '/payment_methods', $data);
-        $body = json_decode((string) $response->getBody(), true);
+        $response = $this->client->post(
+            "/v1/customers/{$customer_id}/payment_methods",
+            $request
+        );
+
+        $body = json_decode($response->getBody()->getContents());
 
         return new PaymentMethod(
-            $body['id'] ?? null,
-            $body['customer_id'] ?? $customerId,
-            $body['description'] ?? $data['description'],
-            $body['token'] ?? $data['token'],
-            $body['item_type'] ?? null,
-            $body['created_at'] ?? null,
-            $body['updated_at'] ?? null,
-            $body['data'] ?? null,
+            id: $body->id ?? null,
+            customer_id: $body->customer_id ?? $customer_id,
+            description: $body->description ?? $request->description,
+            token: $body->token ?? $request->token,
+            item_type: $body->item_type ?? null,
+            created_at: $body->created_at ?? null,
+            updated_at: $body->updated_at ?? null,
+            data: $body->data ?? null,
         );
     }
 } 

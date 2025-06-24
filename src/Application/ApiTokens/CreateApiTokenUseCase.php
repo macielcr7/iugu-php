@@ -7,6 +7,7 @@ namespace Iugu\Application\ApiTokens;
 use Iugu\Domain\ApiTokens\ApiToken;
 use Iugu\Infrastructure\Http\IuguHttpClient;
 use Exception;
+use Iugu\Application\ApiTokens\Requests\CreateApiTokenRequest;
 
 class CreateApiTokenUseCase
 {
@@ -19,13 +20,13 @@ class CreateApiTokenUseCase
 
     /**
      * @param string $accountId
-     * @param array $payload
+     * @param CreateApiTokenRequest $request
      * @return ApiToken
      * @throws Exception
      */
-    public function execute(string $accountId, array $payload): ApiToken
+    public function execute(string $accountId, CreateApiTokenRequest $request): ApiToken
     {
-        $response = $this->httpClient->post("/v1/{$accountId}/api_tokens", $payload);
+        $response = $this->httpClient->post("/v1/{$accountId}/api_tokens", $request->toArray());
         $data = json_decode((string)$response->getBody(), true);
 
         if (!isset($data['id'], $data['description'], $data['token'], $data['created_at'])) {

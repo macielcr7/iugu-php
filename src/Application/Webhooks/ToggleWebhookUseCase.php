@@ -26,10 +26,8 @@ class ToggleWebhookUseCase
             $body['id'] ?? null,
             $body['event'] ?? '',
             $body['url'] ?? '',
-            $body['enabled'] ?? $enabled,
-            $body['created_at'] ?? null,
-            $body['updated_at'] ?? null,
-            $body['data'] ?? null,
+            $body['mode'] ?? 'production',
+            $body['authorization'] ?? null,
         );
     }
 } 

@@ -2,38 +2,70 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
-use Iugu\Application\Customers\ListCustomersUseCase;
-use Iugu\Infrastructure\Http\IuguHttpClient;
 use Iugu\Domain\Customers\Customer;
+use Iugu\Iugu;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Iugu\Infrastructure\Http\IuguHttpClient;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 
 class ListCustomersUseCaseTest extends TestCase
 {
+    private Iugu $iugu;
+    private $mockClient;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        /** @var IuguHttpClient&MockObject $mockClient */
+        $mockClient = $this->createMock(IuguHttpClient::class);
+        $this->mockClient = $mockClient;
+        $this->iugu = new Iugu($this->mockClient);
+    }
+
     public function testExecuteReturnsArrayOfCustomers(): void
     {
-        $mockClient = $this->createMock(IuguHttpClient::class);
-        $mockResponse = $this->createMock(ResponseInterface::class);
-        $mockResponse->method('getBody')->willReturn(json_encode([
+        $responseBody = json_encode([
             'items' => [
                 [
                     'id' => 'c1',
                     'email' => 'a@b.com',
                     'name' => 'A',
                     'cpf_cnpj' => '1',
+                    'notes' => 'Primeiro',
+                    'phone_prefix' => '11',
+                    'phone' => '111111111',
+                    'cc_emails' => null,
+                    'address' => null,
+                    'custom_variables' => [],
+                    'created_at' => '2023-01-01T00:00:00-03:00',
+                    'updated_at' => '2023-01-01T00:00:00-03:00',
                 ],
                 [
                     'id' => 'c2',
                     'email' => 'b@c.com',
                     'name' => 'B',
                     'cpf_cnpj' => '2',
+                    'notes' => 'Segundo',
+                    'phone_prefix' => '22',
+                    'phone' => '222222222',
+                    'cc_emails' => null,
+                    'address' => null,
+                    'custom_variables' => [],
+                    'created_at' => '2023-01-02T00:00:00-03:00',
+                    'updated_at' => '2023-01-02T00:00:00-03:00',
                 ]
             ]
-        ]));
-        $mockClient->method('get')->willReturn($mockResponse);
+        ]);
 
-        $useCase = new ListCustomersUseCase($mockClient);
-        $customers = $useCase->execute();
+        $mockStream = $this->createMock(StreamInterface::class);
+        $mockStream->method('getContents')->willReturn($responseBody);
+        $mockResponse = $this->createMock(ResponseInterface::class);
+        $mockResponse->method('getBody')->willReturn($mockStream);
+        $this->mockClient->method('get')->willReturn($mockResponse);
+
+        $customers = $this->iugu->customers()->list();
 
         $this->assertIsArray($customers);
         $this->assertCount(2, $customers);

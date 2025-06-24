@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Iugu\Application\PaymentTokens;
 
+use Iugu\Application\PaymentTokens\Requests\CreatePaymentTokenRequest;
 use Iugu\Domain\PaymentTokens\PaymentToken;
 use Iugu\Infrastructure\Http\IuguHttpClient;
 use Exception;
 
-class CreatePaymentTokenUseCase
+final class CreatePaymentTokenUseCase
 {
     private IuguHttpClient $httpClient;
 
@@ -17,38 +18,21 @@ class CreatePaymentTokenUseCase
         $this->httpClient = $httpClient;
     }
 
-    /**
-     * @param array{
-     *   account_id: string,
-     *   method: string,
-     *   test: bool,
-     *   data: array{
-     *     number: string,
-     *     verification_value: string,
-     *     first_name: string,
-     *     last_name: string,
-     *     month: string,
-     *     year: string
-     *   }
-     * } $payload
-     * @return PaymentToken
-     * @throws Exception
-     */
-    public function execute(array $payload): PaymentToken
+    public function execute(CreatePaymentTokenRequest $request): PaymentToken
     {
-        $response = $this->httpClient->post('/v1/payment_token', $payload);
-        $data = json_decode((string)$response->getBody(), true);
+        $response = $this->httpClient->post('/v1/payment_token', $request);
+        $data = json_decode($response->getBody()->getContents());
 
-        if (!isset($data['id'], $data['method'], $data['test'], $data['token'])) {
+        if (!isset($data->id, $data->method, $data->test, $data->token)) {
             throw new Exception('Resposta inesperada da API ao criar token de pagamento.');
         }
 
         return new PaymentToken(
-            $data['id'],
-            $data['method'],
-            (bool)$data['test'],
-            $data['token'],
-            $data['extra_info'] ?? null
+            id: $data->id,
+            method: $data->method,
+            test: (bool)$data->test,
+            token: $data->token,
+            extra_info: $data->extra_info ?? null
         );
     }
 } 

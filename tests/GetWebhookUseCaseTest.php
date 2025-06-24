@@ -14,12 +14,17 @@ class GetWebhookUseCaseTest extends TestCase
     {
         $mockClient = $this->createMock(IuguHttpClient::class);
         $mockResponse = $this->createMock(ResponseInterface::class);
-        $mockResponse->method('getBody')->willReturn(json_encode([
-            'id' => 'wh4',
-            'event' => 'customer.created',
-            'url' => 'https://meusite.com/webhook-customer',
-            'enabled' => true,
-        ]));
+        $mockResponse->method('getBody')->willReturn(new class {
+            public function getContents() {
+                return json_encode([
+                    'id' => 'wh4',
+                    'event' => 'customer.created',
+                    'url' => 'https://meusite.com/webhook-customer',
+                    'mode' => 'production',
+                    'authorization' => null
+                ]);
+            }
+        });
         $mockClient->method('get')->willReturn($mockResponse);
 
         $useCase = new GetWebhookUseCase($mockClient);
@@ -29,6 +34,7 @@ class GetWebhookUseCaseTest extends TestCase
         $this->assertEquals('wh4', $webhook->id);
         $this->assertEquals('customer.created', $webhook->event);
         $this->assertEquals('https://meusite.com/webhook-customer', $webhook->url);
-        $this->assertTrue($webhook->enabled);
+        $this->assertEquals('production', $webhook->mode);
+        $this->assertNull($webhook->authorization);
     }
 } 

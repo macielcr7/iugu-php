@@ -1,0 +1,15 @@
+feature:
+  - 'feat*'
+  - 'feature*'
+fix:
+  - 'fix*'
+bug:
+  - 'bug*'
+docs:
+  - 'docs*'
+refactor:
+  - 'refactor*'
+chore:
+  - 'chore*'
+maintenance:
+  - 'maintenance*' 

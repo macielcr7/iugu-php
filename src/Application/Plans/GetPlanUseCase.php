@@ -4,12 +4,19 @@ declare(strict_types=1);
 
 namespace Iugu\Application\Plans;
 
-use Iugu\Infrastructure\Http\IuguHttpClient;
+use Iugu\Domain\Plans\Feature;
 use Iugu\Domain\Plans\Plan;
+use Iugu\Domain\Plans\PlanPrice;
+use Iugu\Infrastructure\Http\IuguHttpClient;
 
-class GetPlanUseCase
+final class GetPlanUseCase
 {
-    public function __construct(private IuguHttpClient $client) {}
+    private IuguHttpClient $client;
+
+    public function __construct(IuguHttpClient $client)
+    {
+        $this->client = $client;
+    }
 
     /**
      * @param string $id
@@ -18,19 +25,43 @@ class GetPlanUseCase
      */
     public function execute(string $id): Plan
     {
-        $response = $this->client->get('plans/' . $id);
-        $body = json_decode((string) $response->getBody(), true);
+        $response = $this->client->get("/v1/plans/{$id}");
+        $body = json_decode($response->getBody()->getContents());
+
+        $features = null;
+        if (!empty($body->features)) {
+            $features = array_map(
+                fn ($feature) => new Feature(
+                    name: $feature->name,
+                    identifier: $feature->identifier,
+                    value: $feature->value
+                ),
+                $body->features
+            );
+        }
+
+        $prices = null;
+        if (!empty($body->prices)) {
+            $prices = array_map(
+                fn ($price) => new PlanPrice(
+                    id: $price->id,
+                    currency: $price->currency,
+                    value_cents: $price->value_cents
+                ),
+                $body->prices
+            );
+        }
 
         return new Plan(
-            $body['id'] ?? null,
-            $body['identifier'] ?? '',
-            $body['name'] ?? '',
-            $body['interval'] ?? null,
-            $body['interval_type'] ?? null,
-            $body['value_cents'] ?? null,
-            $body['created_at'] ?? null,
-            $body['updated_at'] ?? null,
-            $body['features'] ?? null,
+            id: $body->id ?? null,
+            identifier: $body->identifier ?? '',
+            name: $body->name ?? '',
+            interval: $body->interval ?? null,
+            interval_type: $body->interval_type ?? null,
+            created_at: $body->created_at ?? null,
+            updated_at: $body->updated_at ?? null,
+            features: $features,
+            prices: $prices
         );
     }
 } 

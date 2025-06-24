@@ -14,14 +14,15 @@ class IuguHttpClient
     private string $apiToken;
     private string $baseUrl;
 
-    public function __construct()
+    public function __construct(string $apiToken)
     {
-        $this->apiToken = config('iugu.api_token');
-        $this->baseUrl = rtrim(config('iugu.base_url'), '/') . '/';
-        $timeout = config('iugu.timeout', 10);
+        $this->apiToken = $apiToken;
+        $this->baseUrl = 'https://api.iugu.com';
+        $timeout = 10;
         $this->client = new Client([
             'base_uri' => $this->baseUrl,
             'timeout' => $timeout,
+            'auth' => [$this->apiToken, ''],
             'headers' => [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
@@ -34,11 +35,10 @@ class IuguHttpClient
      */
     public function request(string $method, string $uri, array $options = []): ResponseInterface
     {
-        $options['query']['api_token'] = $this->apiToken;
         try {
             return $this->client->request($method, $uri, $options);
         } catch (GuzzleException $e) {
-            throw new \Exception('Erro na requisição à API Iugu: ' . $e->getMessage(), $e->getCode(), $e);
+            throw new \Exception('Iugu API request error: ' . $e->getMessage(), $e->getCode(), $e);
         }
     }
 
@@ -47,18 +47,26 @@ class IuguHttpClient
         return $this->request('GET', $uri, ['query' => $query]);
     }
 
-    public function post(string $uri, array $body = []): ResponseInterface
+    public function post(string $uri, mixed $body = []): ResponseInterface
     {
-        return $this->request('POST', $uri, ['json' => $body]);
+        return $this->request('POST', $uri, ['json' => $this->convertToArray($body)]);
     }
 
-    public function put(string $uri, array $body = []): ResponseInterface
+    public function put(string $uri, mixed $body = []): ResponseInterface
     {
-        return $this->request('PUT', $uri, ['json' => $body]);
+        return $this->request('PUT', $uri, ['json' => $this->convertToArray($body)]);
     }
 
-    public function delete(string $uri, array $body = []): ResponseInterface
+    public function delete(string $uri, mixed $body = []): ResponseInterface
     {
-        return $this->request('DELETE', $uri, ['json' => $body]);
+        return $this->request('DELETE', $uri, ['json' => $this->convertToArray($body)]);
+    }
+
+    private function convertToArray(mixed $data): array
+    {
+        if (empty($data)) {
+            return [];
+        }
+        return json_decode(json_encode($data), true);
     }
 } 

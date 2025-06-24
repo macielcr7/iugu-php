@@ -1,6 +1,6 @@
 # Exemplos de Uso - Integração Iugu PHP
 
-Este diretório contém exemplos práticos de uso do package de integração com a API da Iugu, prontos para rodar via CLI ou serem adaptados para controllers/services do Laravel.
+Este diretório contém exemplos práticos de uso da SDK PHP da Iugu, prontos para rodar via CLI ou serem adaptados para qualquer framework PHP.
 
 ## Pré-requisitos
 - PHP 8.1+
@@ -40,16 +40,41 @@ Execute qualquer exemplo diretamente pelo terminal:
 php examples/invoices/create_invoice.php
 ```
 
-## Instanciação do Client
+## Instanciação da SDK (Fachada)
 
-A partir da versão atual, **não é mais necessário passar parâmetros para o client**. Basta:
+A partir da versão atual, **todos os exemplos utilizam a fachada `Iugu`**, que centraliza o acesso a todos os serviços da API:
 
 ```php
-use Iugu\Infrastructure\Http\IuguHttpClient;
-$client = new IuguHttpClient();
+use Iugu\Iugu;
+
+// O token pode ser omitido se já estiver em config/env
+$iugu = new Iugu();
+// Ou explicitamente:
+// $iugu = Iugu::create('seu_token_aqui');
 ```
 
 A configuração é lida automaticamente de `config/iugu.php` e das variáveis de ambiente, usando os helpers globais `env()` e `config()` (já disponíveis via autoload do Composer).
+
+## Exemplo de uso da fachada
+
+```php
+// Criar uma fatura
+use Iugu\Application\Invoices\Requests\CreateInvoiceRequest;
+use Iugu\Application\Invoices\Requests\InvoiceItemRequest;
+
+$invoiceRequest = new CreateInvoiceRequest(
+    email: 'cliente@exemplo.com',
+    due_date: date('Y-m-d', strtotime('+7 days')),
+    items: [
+        new InvoiceItemRequest(
+            description: 'Produto Exemplo',
+            quantity: 1,
+            price_cents: 1000
+        )
+    ]
+);
+$invoice = $iugu->invoices()->create($invoiceRequest);
+```
 
 ## Sumário dos Exemplos Disponíveis
 
@@ -105,42 +130,6 @@ A configuração é lida automaticamente de `config/iugu.php` e das variáveis d
   - `direct_charges/charge_two_credit_cards.php`
 - **Zero Auth (Validação de Cartão):**
   - `zero_auth/validate_card.php`
-
-## Integração com Laravel
-
-Você pode usar os casos de uso diretamente em controllers/services do Laravel. Exemplo de Service Provider:
-
-```php
-// app/Providers/IuguServiceProvider.php
-namespace App\Providers;
-
-use Illuminate\Support\ServiceProvider;
-use Iugu\Infrastructure\Http\IuguHttpClient;
-use Iugu\Application\Invoices\CreateInvoiceUseCase;
-
-class IuguServiceProvider extends ServiceProvider
-{
-    public function register()
-    {
-        $this->app->singleton(IuguHttpClient::class, function ($app) {
-            return new IuguHttpClient();
-        });
-        $this->app->bind(CreateInvoiceUseCase::class, function ($app) {
-            return new CreateInvoiceUseCase($app->make(IuguHttpClient::class));
-        });
-        // ...outros casos de uso
-    }
-}
-```
-
-No Controller:
-```php
-public function store(Request $request, CreateInvoiceUseCase $useCase)
-{
-    $invoice = $useCase->execute($request->all());
-    // ...
-}
-```
 
 ## Observações
 - Os exemplos são didáticos e podem ser adaptados conforme a necessidade do seu projeto.

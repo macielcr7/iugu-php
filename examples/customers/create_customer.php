@@ -2,15 +2,21 @@
 
 require __DIR__ . '/../bootstrap.php';
 
-use Iugu\Application\Customers\CreateCustomerUseCase;
-
-$useCase = new CreateCustomerUseCase($client);
+use Iugu\Application\Common\Requests\CustomVariableRequest;
+use Iugu\Application\Customers\Requests\CreateCustomerRequest;
 
 try {
-    $customer = $useCase->execute([
-        'email' => 'cliente@exemplo.com',
-        'name' => 'Cliente Exemplo',
-    ]);
+    $customVariables = [
+        new CustomVariableRequest(name: 'origem', value: 'api-test'),
+        new CustomVariableRequest(name: 'user_id', value: '12345'),
+    ];
+
+    $customerRequest = new CreateCustomerRequest(
+        email: 'cliente.novo@exemplo.com',
+        name: 'Cliente Novo Exemplo',
+        custom_variables: $customVariables
+    );
+    $customer = $iugu->customers()->create($customerRequest);
     print_r($customer);
 } catch (Exception $e) {
     echo 'Erro: ' . $e->getMessage();

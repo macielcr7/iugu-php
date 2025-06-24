@@ -2,13 +2,11 @@
 
 require __DIR__ . '/../bootstrap.php';
 
-use Iugu\Application\PaymentMethods\DeletePaymentMethodUseCase;
-
-$useCase = new DeletePaymentMethodUseCase($client);
-
 try {
-    $result = $useCase->execute('ID_DO_CLIENTE', 'ID_DA_FORMA_PAGAMENTO');
-    print_r($result);
+    $customerId = 'ID_DO_CLIENTE';
+    $paymentMethodId = 'ID_DA_FORMA';
+    $paymentMethod = $iugu->paymentMethods()->delete($customerId, $paymentMethodId);
+    print_r($paymentMethod);
 } catch (Exception $e) {
     echo 'Erro: ' . $e->getMessage();
 } 

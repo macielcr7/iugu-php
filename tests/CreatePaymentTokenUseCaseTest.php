@@ -2,29 +2,44 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
-use Iugu\Application\PaymentTokens\CreatePaymentTokenUseCase;
-use Iugu\Infrastructure\Http\IuguHttpClient;
+use Iugu\Application\PaymentTokens\Requests\CreatePaymentTokenRequest;
 use Iugu\Domain\PaymentTokens\PaymentToken;
+use Iugu\Iugu;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Iugu\Infrastructure\Http\IuguHttpClient;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 
 class CreatePaymentTokenUseCaseTest extends TestCase
 {
+    private Iugu $iugu;
+    private $mockClient;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        /** @var IuguHttpClient&MockObject $mockClient */
+        $mockClient = $this->createMock(IuguHttpClient::class);
+        $this->mockClient = $mockClient;
+        $this->iugu = new Iugu($this->mockClient);
+    }
+
     public function testExecuteSuccess(): void
     {
-        $payload = [
-            'account_id' => 'DDD1234B233A45B694728C1EB6941E2B',
-            'method' => 'credit_card',
-            'test' => true,
-            'data' => [
+        $request = new CreatePaymentTokenRequest(
+            account_id: 'DDD1234B233A45B694728C1EB6941E2B',
+            method: 'credit_card',
+            test: true,
+            data: [
                 'number' => '1111-1111-1111-1111',
                 'verification_value' => '213',
                 'first_name' => 'José',
                 'last_name' => 'Silva',
                 'month' => '05',
                 'year' => '2026',
-            ],
-        ];
+            ]
+        );
 
         $apiResponse = [
             'id' => 'tok_123456',
@@ -34,60 +49,45 @@ class CreatePaymentTokenUseCaseTest extends TestCase
             'extra_info' => null,
         ];
 
-        /** @var IuguHttpClient&\PHPUnit\Framework\MockObject\MockObject $httpClient */
-        $httpClient = $this->getMockBuilder(IuguHttpClient::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $responseMock = $this->createMock(ResponseInterface::class);
-        $responseMock->method('getBody')
-            ->willReturn(json_encode($apiResponse));
-        $httpClient->expects($this->once())
-            ->method('post')
-            ->with('/v1/payment_token', $payload)
-            ->willReturn($responseMock);
+        $mockStream = $this->createMock(StreamInterface::class);
+        $mockStream->method('getContents')->willReturn(json_encode($apiResponse));
+        $mockResponse = $this->createMock(ResponseInterface::class);
+        $mockResponse->method('getBody')->willReturn($mockStream);
+        $this->mockClient->method('post')->willReturn($mockResponse);
 
-        $useCase = new CreatePaymentTokenUseCase($httpClient);
-        $token = $useCase->execute($payload);
+        $token = $this->iugu->paymentTokens()->create($request);
 
         $this->assertInstanceOf(PaymentToken::class, $token);
-        $this->assertEquals('tok_123456', $token->getId());
-        $this->assertEquals('credit_card', $token->getMethod());
-        $this->assertTrue($token->isTest());
-        $this->assertEquals('tok_123456', $token->getToken());
-        $this->assertNull($token->getExtraInfo());
+        $this->assertEquals('tok_123456', $token->id);
+        $this->assertEquals('credit_card', $token->method);
+        $this->assertTrue($token->test);
+        $this->assertEquals('tok_123456', $token->token);
+        $this->assertNull($token->extra_info);
     }
 
     public function testExecuteFailure(): void
     {
-        $payload = [
-            'account_id' => 'DDD1234B233A45B694728C1EB6941E2B',
-            'method' => 'credit_card',
-            'test' => true,
-            'data' => [
+        $request = new CreatePaymentTokenRequest(
+            account_id: 'DDD1234B233A45B694728C1EB6941E2B',
+            method: 'credit_card',
+            test: true,
+            data: [
                 'number' => '1111-1111-1111-1111',
                 'verification_value' => '213',
                 'first_name' => 'José',
                 'last_name' => 'Silva',
                 'month' => '05',
                 'year' => '2026',
-            ],
-        ];
+            ]
+        );
 
-        /** @var IuguHttpClient&\PHPUnit\Framework\MockObject\MockObject $httpClient */
-        $httpClient = $this->getMockBuilder(IuguHttpClient::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $responseMock = $this->createMock(ResponseInterface::class);
-        $responseMock->method('getBody')
-            ->willReturn(json_encode(['unexpected' => 'response']));
-        $httpClient->expects($this->once())
-            ->method('post')
-            ->with('/v1/payment_token', $payload)
-            ->willReturn($responseMock);
-
-        $useCase = new CreatePaymentTokenUseCase($httpClient);
+        $mockStream = $this->createMock(StreamInterface::class);
+        $mockStream->method('getContents')->willReturn(json_encode(['unexpected' => 'response']));
+        $mockResponse = $this->createMock(ResponseInterface::class);
+        $mockResponse->method('getBody')->willReturn($mockStream);
+        $this->mockClient->method('post')->willReturn($mockResponse);
 
         $this->expectException(Exception::class);
-        $useCase->execute($payload);
+        $this->iugu->paymentTokens()->create($request);
     }
 } 

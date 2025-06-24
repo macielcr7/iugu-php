@@ -2,15 +2,15 @@
 
 require __DIR__ . '/../bootstrap.php';
 
-use Iugu\Application\ApiTokens\CreateApiTokenUseCase;
-
-$useCase = new CreateApiTokenUseCase($client);
+use Iugu\Application\ApiTokens\Requests\CreateApiTokenRequest;
 
 try {
-    $apiToken = $useCase->execute('SUA_ACCOUNT_ID', [
-        'api_type' => 'read_write',
-        'description' => 'Token de integração',
-    ]);
+    $accountId = 'SUA_ACCOUNT_ID';
+    $request = new CreateApiTokenRequest(
+        api_type: 'read_write',
+        description: 'Token de integração'
+    );
+    $apiToken = $iugu->apiTokens()->create($accountId, $request);
     print_r($apiToken);
 } catch (Exception $e) {
     echo 'Erro: ' . $e->getMessage();

@@ -4,36 +4,68 @@ declare(strict_types=1);
 
 namespace Iugu\Application\Customers;
 
-use Iugu\Infrastructure\Http\IuguHttpClient;
+use Iugu\Domain\Common\Address;
+use Iugu\Domain\Common\CustomVariable;
 use Iugu\Domain\Customers\Customer;
+use Iugu\Infrastructure\Http\IuguHttpClient;
 
-class ListCustomersUseCase
+final class ListCustomersUseCase
 {
-    public function __construct(private IuguHttpClient $client) {}
+    private IuguHttpClient $client;
+
+    public function __construct(IuguHttpClient $client)
+    {
+        $this->client = $client;
+    }
 
     /**
-     * @param array $filters
      * @return Customer[]
-     * @throws \Exception
      */
     public function execute(array $filters = []): array
     {
-        $response = $this->client->get('customers', $filters);
-        $body = json_decode((string) $response->getBody(), true);
-        $items = $body['items'] ?? [];
-        $customers = [];
-        foreach ($items as $item) {
-            $customers[] = new Customer(
-                $item['id'] ?? null,
-                $item['email'] ?? '',
-                $item['name'] ?? null,
-                $item['cpf_cnpj'] ?? null,
-                $item['notes'] ?? null,
-                $item['created_at'] ?? null,
-                $item['updated_at'] ?? null,
-                $item['custom_variables'] ?? null,
+        $response = $this->client->get('/v1/customers', $filters);
+        $body = json_decode($response->getBody()->getContents());
+
+        return array_map(function ($item) {
+            $customVariables = [];
+            if (!empty($item->custom_variables)) {
+                $customVariables = array_map(
+                    static fn ($cv) => new CustomVariable(
+                        name: $cv->name,
+                        value: $cv->value
+                    ),
+                    $item->custom_variables
+                );
+            }
+
+            $address = null;
+            if (isset($item->address)) {
+                $address = new Address(
+                    street: $item->address->street ?? null,
+                    number: $item->address->number ?? null,
+                    city: $item->address->city ?? null,
+                    state: $item->address->state ?? null,
+                    country: $item->address->country ?? null,
+                    zip_code: $item->address->zip_code ?? null,
+                    district: $item->address->district ?? null,
+                    complement: $item->address->complement ?? null
+                );
+            }
+
+            return new Customer(
+                id: $item->id,
+                email: $item->email,
+                name: $item->name,
+                notes: $item->notes ?? null,
+                cpf_cnpj: $item->cpf_cnpj ?? null,
+                cc_emails: $item->cc_emails ?? null,
+                phone_prefix: $item->phone_prefix ?? null,
+                phone: $item->phone ?? null,
+                address: $address,
+                custom_variables: $customVariables,
+                created_at: $item->created_at,
+                updated_at: $item->updated_at
             );
-        }
-        return $customers;
+        }, $body->items);
     }
 } 

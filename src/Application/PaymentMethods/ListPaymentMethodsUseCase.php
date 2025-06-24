@@ -7,33 +7,34 @@ namespace Iugu\Application\PaymentMethods;
 use Iugu\Infrastructure\Http\IuguHttpClient;
 use Iugu\Domain\PaymentMethods\PaymentMethod;
 
-class ListPaymentMethodsUseCase
+final class ListPaymentMethodsUseCase
 {
-    public function __construct(private IuguHttpClient $client) {}
+    private IuguHttpClient $client;
+
+    public function __construct(IuguHttpClient $client)
+    {
+        $this->client = $client;
+    }
 
     /**
-     * @param string $customerId
      * @return PaymentMethod[]
-     * @throws \Exception
      */
-    public function execute(string $customerId): array
+    public function execute(string $customer_id): array
     {
-        $response = $this->client->get('customers/' . $customerId . '/payment_methods');
-        $body = json_decode((string) $response->getBody(), true);
-        $items = $body['items'] ?? [];
-        $methods = [];
-        foreach ($items as $item) {
-            $methods[] = new PaymentMethod(
-                $item['id'] ?? null,
-                $item['customer_id'] ?? $customerId,
-                $item['description'] ?? '',
-                $item['token'] ?? '',
-                $item['item_type'] ?? null,
-                $item['created_at'] ?? null,
-                $item['updated_at'] ?? null,
-                $item['data'] ?? null,
+        $response = $this->client->get("/v1/customers/{$customer_id}/payment_methods");
+        $body = json_decode($response->getBody()->getContents());
+
+        return array_map(function ($item) use ($customer_id) {
+            return new PaymentMethod(
+                id: $item->id ?? null,
+                customer_id: $item->customer_id ?? $customer_id,
+                description: $item->description ?? '',
+                token: $item->token ?? '',
+                item_type: $item->item_type ?? null,
+                created_at: $item->created_at ?? null,
+                updated_at: $item->updated_at ?? null,
+                data: $item->data ?? null,
             );
-        }
-        return $methods;
+        }, $body->items);
     }
 } 

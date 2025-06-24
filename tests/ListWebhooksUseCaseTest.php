@@ -14,20 +14,28 @@ class ListWebhooksUseCaseTest extends TestCase
     {
         $mockClient = $this->createMock(IuguHttpClient::class);
         $mockResponse = $this->createMock(ResponseInterface::class);
-        $mockResponse->method('getBody')->willReturn(json_encode([
-            'items' => [
-                [
-                    'id' => 'wh1',
-                    'event' => 'invoice.created',
-                    'url' => 'https://meusite.com/webhook',
-                ],
-                [
-                    'id' => 'wh2',
-                    'event' => 'customer.created',
-                    'url' => 'https://meusite.com/webhook-customer',
-                ]
-            ]
-        ]));
+        $mockResponse->method('getBody')->willReturn(new class {
+            public function getContents() {
+                return json_encode([
+                    'items' => [
+                        [
+                            'id' => 'wh1',
+                            'event' => 'invoice.created',
+                            'url' => 'https://meusite.com/webhook',
+                            'mode' => 'production',
+                            'authorization' => null
+                        ],
+                        [
+                            'id' => 'wh2',
+                            'event' => 'customer.created',
+                            'url' => 'https://meusite.com/webhook-customer',
+                            'mode' => 'production',
+                            'authorization' => null
+                        ]
+                    ]
+                ]);
+            }
+        });
         $mockClient->method('get')->willReturn($mockResponse);
 
         $useCase = new ListWebhooksUseCase($mockClient);

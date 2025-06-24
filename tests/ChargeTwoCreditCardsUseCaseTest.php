@@ -7,22 +7,23 @@ use Iugu\Application\DirectCharges\ChargeTwoCreditCardsUseCase;
 use Iugu\Infrastructure\Http\IuguHttpClient;
 use Iugu\Domain\DirectCharges\DirectChargeTwoCreditCardsResult;
 use Psr\Http\Message\ResponseInterface;
+use Iugu\Application\DirectCharges\Requests\ChargeTwoCreditCardsRequest;
+use Iugu\Application\DirectCharges\Requests\CreditCardPaymentRequest;
 
 class ChargeTwoCreditCardsUseCaseTest extends TestCase
 {
     public function testExecuteSuccess(): void
     {
-        $payload = [
-            'api_token' => 'live_api_token',
-            'invoiced_id' => '1234567890ABCDEF1234567890ABCDEF',
-            'iugu_credit_card_payment' => [
-                ['token' => 'token1', 'amount' => 500],
-                ['token' => 'token2', 'amount' => 500],
-            ],
-        ];
+        $request = new ChargeTwoCreditCardsRequest(
+            invoiceId: '1234567890ABCDEF1234567890ABCDEF',
+            creditCardPayments: [
+                new CreditCardPaymentRequest('token1', 500),
+                new CreditCardPaymentRequest('token2', 500),
+            ]
+        );
         $apiResponse = [
-            'id' => 'charge_123',
-            'status' => 'paid',
+            'invoice' => [ 'status' => 'paid' ],
+            'credit_card_transactions' => [],
             'errors' => null,
         ];
         /** @var IuguHttpClient&\PHPUnit\Framework\MockObject\MockObject $httpClient */
@@ -31,45 +32,50 @@ class ChargeTwoCreditCardsUseCaseTest extends TestCase
             ->getMock();
         $responseMock = $this->createMock(ResponseInterface::class);
         $responseMock->method('getBody')
-            ->willReturn(json_encode($apiResponse));
+            ->willReturn(new class($apiResponse) {
+                private $data;
+                public function __construct($data) { $this->data = $data; }
+                public function getContents() { return json_encode($this->data); }
+            });
         $httpClient->expects($this->once())
             ->method('post')
-            ->with('/v1/charge_two_credit_cards', $payload)
+            ->with('/v1/charge_two_credit_cards', $request->toArray())
             ->willReturn($responseMock);
 
         $useCase = new ChargeTwoCreditCardsUseCase($httpClient);
-        $result = $useCase->execute($payload);
+        $result = $useCase->execute($request);
 
         $this->assertInstanceOf(DirectChargeTwoCreditCardsResult::class, $result);
-        $this->assertEquals('charge_123', $result->getId());
-        $this->assertEquals('paid', $result->getStatus());
-        $this->assertNull($result->getErrors());
+        $this->assertEquals('paid', $result->invoice->status);
+        $this->assertIsArray($result->credit_card_transactions);
+        $this->assertNull($result->errors);
     }
 
     public function testExecuteFailure(): void
     {
-        $payload = [
-            'api_token' => 'live_api_token',
-            'invoiced_id' => '1234567890ABCDEF1234567890ABCDEF',
-            'iugu_credit_card_payment' => [
-                ['token' => 'token1', 'amount' => 500],
-                ['token' => 'token2', 'amount' => 500],
-            ],
-        ];
+        $request = new ChargeTwoCreditCardsRequest(
+            invoiceId: '1234567890ABCDEF1234567890ABCDEF',
+            creditCardPayments: [
+                new CreditCardPaymentRequest('token1', 500),
+                new CreditCardPaymentRequest('token2', 500),
+            ]
+        );
         /** @var IuguHttpClient&\PHPUnit\Framework\MockObject\MockObject $httpClient */
         $httpClient = $this->getMockBuilder(IuguHttpClient::class)
             ->disableOriginalConstructor()
             ->getMock();
         $responseMock = $this->createMock(ResponseInterface::class);
         $responseMock->method('getBody')
-            ->willReturn(json_encode(['unexpected' => 'response']));
+            ->willReturn(new class {
+                public function getContents() { return json_encode(['unexpected' => 'response']); }
+            });
         $httpClient->expects($this->once())
             ->method('post')
-            ->with('/v1/charge_two_credit_cards', $payload)
+            ->with('/v1/charge_two_credit_cards', $request->toArray())
             ->willReturn($responseMock);
 
         $useCase = new ChargeTwoCreditCardsUseCase($httpClient);
         $this->expectException(Exception::class);
-        $useCase->execute($payload);
+        $useCase->execute($request);
     }
 } 

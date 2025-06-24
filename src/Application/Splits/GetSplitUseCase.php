@@ -22,14 +22,20 @@ class GetSplitUseCase
         $body = json_decode((string) $response->getBody(), true);
 
         return new Split(
-            $body['id'] ?? null,
-            $body['recipient_account_id'] ?? '',
-            $body['cents'] ?? null,
-            $body['percent'] ?? null,
-            $body['type'] ?? null,
-            $body['created_at'] ?? null,
-            $body['updated_at'] ?? null,
-            $body['data'] ?? null,
+            id: $body['id'],
+            name: $body['name'] ?? null,
+            recipient_account_id: $body['recipient_account_id'],
+            permit_aggregated: $body['permit_aggregated'],
+            percent: $body['percent'],
+            cents: $body['cents'],
+            credit_card_percent: $body['credit_card_percent'],
+            credit_card_cents: $body['credit_card_cents'],
+            bank_slip_percent: $body['bank_slip_percent'],
+            bank_slip_cents: $body['bank_slip_cents'],
+            pix_percent: $body['pix_percent'],
+            pix_cents: $body['pix_cents'],
+            created_at: $body['created_at'] ?? null,
+            updated_at: $body['updated_at'] ?? null
         );
     }
 } 
